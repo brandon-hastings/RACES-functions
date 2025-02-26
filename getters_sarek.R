@@ -1,4 +1,3 @@
-library(methods)
 # return list of files from sarek for a given caller/purity/coverage combination
 get_sarek_variant_called_files <- function(basedir,
                                            SPN_id_number,
@@ -146,14 +145,12 @@ parse_sarek_variant_called_files <- function(list_of_output_files) {
 }
 
 
-# Returns a multi-layered list structure, where coverage is the first layer,
-# purity is the second, name of the variant caller is the third, and sample ID
-# is the last, holding variant call files for each sample/caller/purity/coverage
+# Returns a multi-layered list structure, where variant caller is the first layer,
+# coverage is the second, purity is the third, and sample ID
+# is the last, holding variant call files for each caller/coverage/purity/sample
 # combination.
 # Coverage, purity, and variant caller can be supplied as parameters in the
 # function call. Sample IDs are generated from the file structure.
-
-# ---Work in progress---
 batch_retrieve_sarek_variant_caller <- function(basedir,
                                                 SPN_id_number,
                                                 coverage=c(50, 100, 150, 200),
@@ -161,9 +158,7 @@ batch_retrieve_sarek_variant_caller <- function(basedir,
                                                 variant_callers=c("mutect2",
                                                                   "strelka",
                                                                   "ascat"),
-                                                sampleID,
-                                                normalID="normal_sample",
-                                                patientID=NULL) {
+                                                normalID="normal_sample") {
   SPN_ID <- paste("SPN", as.character(SPN_id_number))
   sarek_path <- file.path(as.character(basedir),
                           paste("SPN", as.character(SPN_id_number)),
@@ -184,63 +179,36 @@ batch_retrieve_sarek_variant_caller <- function(basedir,
                              "variant_calling",
                              variant_callers[vc])
         sample_dirs <- list.dir(path = vc_path)
+        samples <- c(rep(NA, length(sample_dirs)))
         for (s in 1:length(sample_dirs)) {
-          
-        }
-        files_list <- get_sarek_variant_called_files(basedir = basedir,
-                                                     SPN_id_number = SPN_ID,
-                                                     coverage = coverage[c],
-                                                     purity = purity[p],
-                                                     variant_caller = variant_callers[vc],
-                                                     sampleID = sampleID,
-                                                     normalID = normalID,
-                                                     patientID = patientID)
-        vc_path <- file.path(sarek_path,
-                             coverage_purity_combination,
-                             "variant_calling",
-                             variant_callers[vc])
-        sample_dirs <- list.dir(path = vc_path)
-        samples <- c(rep(NA, length(sample_dirs)))
-        for (d in 1:length(sample_dirs)) {
-          files_list <- list.files(sample_dirs[d])
-          samples[d] <- files_list
-        }
-      }
-    }
-  }
-}
-  
-  # can be improved here. apply function? access through not a list?
-  coverages <- list(rep(NA, length(coverage)))
-  for (c in 1:length(coverage))  {
-    purities <- list(rep(NA, length(purity)))
-    for (p in 1:length(purity)) {
-      coverage_purity_combination <- paste(as.character(coverage[c]),
-                                           "x_",
-                                           as.character(purity[p]),
-                                           "p")
-      callers <- list(rep(NA, length(variant_callers)))
-      for (vc in 1:length(variant_callers)) {
-        vc_path <- file.path(sarek_path,
-                             coverage_purity_combination,
-                             "variant_calling",
-                             variant_callers[vc])
-        sample_dirs <- list.dir(path = vc_path)
-        samples <- c(rep(NA, length(sample_dirs)))
-        for (d in 1:length(sample_dirs)) {
-          files_list <- list.files(sample_dirs[d])
-          samples[d] <- files_list
+          if (variant_callers[vc] == "mutect2") {
+            mutect_naming <- strsplit(basename(sample_dirs[s]), ",")[[1]]
+            sampleID <- mutect_naming[1]
+            patientID <- mutect_naming[3]
+          } else {
+            sampleID <- sample_dirs[s]
+          }
+          files_list <- get_sarek_variant_called_files(basedir = basedir,
+                                                       SPN_id_number = SPN_ID,
+                                                       coverage = coverage[c],
+                                                       purity = purity[p],
+                                                       variant_caller = variant_callers[vc],
+                                                       sampleID = sampleID,
+                                                       normalID = normalID,
+                                                       patientID = patientID)
+          parsed_files <- parse_sarek_variant_called_files(files_list)
+          patientID <- NULL
+          samples[s] <- parsed_files
         }
         names(samples) <- lapply(sample_dirs, basename)
-        callers[vc] <- samples
+        purities[p] <- samples
       }
-      names(callers) <- variant_callers
-      purities[p] <- callers
+      names(purities) <- lapply(purity, as.character)
+      coverages[c] <- purities
     }
-    names(purities) <- as.character(purity)
-    coverages[c] <- purities
+    names(coverages) <- lapply(coverage, as.character)
+    callers[vc] <- coverages
   }
-  names(coverages) <- as.character(coverage)
-  
-  return(coverages)
+  names(callers) <- variant_callers
+  return(callers)
 }
