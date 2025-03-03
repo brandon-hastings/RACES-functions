@@ -1,13 +1,15 @@
 
 
-rm(list = ls()) # clears objects from the workspace
+#rm(list = ls()) # clears objects from the workspace
 library(dplyr)
+library(rRACES)
 
 
 #===============================================================================
 # AUXILIARY FUNCTIONS
 #===============================================================================
 
+# quality control the input parameters
 #-------------------------------------------------------------------------------
 qc_args <- function(name, coverage, purity, timepoint, sample_id, type) {
   if (!is.numeric(name) || name %% 1 != 0) {
@@ -25,28 +27,39 @@ qc_args <- function(name, coverage, purity, timepoint, sample_id, type) {
   if (!is.null(sample_id) && (!is.numeric(sample_id) || sample_id %% 1 != 0)) {
     stop("Error: 'sample_id' must be integer") # sample_id : integer
   }
-  if (!(type %in% c("SNV", "CNA"))) {
+  if (!(type %in% c("snv", "cna", "phylo"))) {
     stop("Error: 'type' must be one of 'SNV' and 'CNA'")
   }
   return(TRUE)
 }
 
+# generate the pattern for string matching for each required scenario
 #-------------------------------------------------------------------------------
 gen_ptr <- function(SPN_ID, timepoint, sample_id, type) {
-  if (type == "CNA") {
+  
+  if (type == "cna") {
     timepoint_ph <- ifelse(test = is.null(timepoint), yes = "\\d+", no = timepoint)
     sample_id_ph <- ifelse(test = is.null(sample_id), yes = "\\d+", no = sample_id)
     ptr <- paste0("^SPN0", SPN_ID, "_", timepoint_ph, "\\.", sample_id_ph, "_cna\\.rds$")
     return(ptr)
-  } else if (type == "SNV") {
+  }
+  
+  else if (type == "snv") {
     ptr <- paste0("SPN0", SPN_ID, "/races/purity_", purity, "/seq_results_muts_merged_coverage_", coverage, "x.rds")
     return(ptr)
-  } else {
+  }
+  
+  else if (type == "phylo") {
+    ptr <- paste0("SPN0", SPN_ID, "/races/phylo_forest.sff")
+    return(ptr)
+  }
+  
+  else {
     stop("Error: invalid!")
   }
 }
 
-# return list of file paths satisfying pattern
+# return list of absolute file paths as a result of string matching
 #-------------------------------------------------------------------------------
 search_files <- function(directory, ptr) {
   files <- list.files(path = directory, pattern = ptr, full.names = TRUE, recursive = TRUE)
@@ -54,7 +67,7 @@ search_files <- function(directory, ptr) {
 }
 
 
-# return the file object given the file path ?????
+# return the file object given the file path
 #-------------------------------------------------------------------------------
 load_multiple_rds <- function(file_paths) {
   ext <- tolower( tail(strsplit(basename(file_paths), "\\.")[[1]], 1) )
@@ -68,32 +81,48 @@ load_multiple_rds <- function(file_paths) {
 
 
 
-
 #===============================================================================
-# GETTER FUNCTION (FILE NAMES)
+# MAIN GETTER FUNCTION
 #===============================================================================
-get_files <- function(PATH = "/orfeo/cephfs/scratch/cdslab/shared/SCOUT/", 
-                      SPN_ID = 1, 
-                      coverage = 100, 
-                      purity = 0.6, 
-                      timepoint = NULL, 
-                      sample_id = NULL, 
-                      type = "CNA") {
+# input:
+  # PATH      : (string) - abosolute path
+  # SPN_ID    : (integer) - SPN ID
+  # coverage  : (integer)
+  # purity    : (float)
+  # timepoint : (integer)
+  # sample_id : (integer)
+  # type      : ("cna", "snv", "phylo")
+# output:
+  # list of file object
+getter_races <- function(PATH = "/orfeo/cephfs/scratch/cdslab/shared/SCOUT/", 
+                         SPN_ID = 1, 
+                         coverage = 100, 
+                         purity = 0.6, 
+                         timepoint = NULL, 
+                         sample_id = NULL, 
+                         type = "cna") {
+  
+  type <- tolwer(type)
   
   tryCatch(
     {
       qc_args(name=SPN_ID, coverage=coverage, purity=purity, timepoint=timepoint, sample_id=sample_id, type=type)
-      
       ptr <- gen_ptr(SPN_ID, timepoint, sample_id, type)
-      
       #message(ptr)
-      
       files_list <- search_files(directory=PATH, ptr)
+      
+      if (type=="phylo") {
+        return(rRACES::load_phylogenetic_forest(files_list))
+      }
       
       if ( length(files_list) != 0 ) {
         return(load_multiple_rds(files_list))
-      } else {
+      }
+      
+      # if nothing find
+      else {
         message("NOT FOUND!")
+        return(NULL)
       }
       
     },
