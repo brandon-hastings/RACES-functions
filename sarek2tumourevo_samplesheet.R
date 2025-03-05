@@ -114,10 +114,11 @@ create_tumourevo_samplesheet <- function(basedir,
                                                 cancer_type,
                                                 normalID)
     # save samplesheet as csv
+    filename <- "some file path name"
+    write.csv(tumourevo_samplesheet, file = filename)
+    # check exist and return message
+    if (file.exists(filename)) {
+      print(paste0("samplesheet created at ", filename))
+    }
   }
-  
-  
-  
-  
-  return(tumourevo_samplesheet)
 }
