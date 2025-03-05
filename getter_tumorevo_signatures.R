@@ -1,12 +1,44 @@
 
 
-rm(list = ls()) # clears objects from the workspace
-library(dplyr)
-library(rRACES)
+
+# quality control the input parameters
+#-------------------------------------------------------------------------------
+qc_args <- function(name, coverage, purity, tools) {
+  if (!is.numeric(name) || name %% 1 != 0) {
+    stop("Error: 'name' must be integer") # name : integer
+  }
+  if (!is.numeric(coverage) || coverage %% 1 != 0) {
+    stop("Error: 'coverage' must be integer") # coverage : integer
+  }
+  if (!is.numeric(purity) || (purity > 1 || purity < 0)) {
+    stop("Error: 'purity' must be a number between 0 and 1") # purity : float [0, 1]
+  }
+  if (!(tools %in% c("SigProfiler", "SparseSignatures"))) {
+    stop("Error: 'type' must be one of 'SigProfiler' and 'SparseSignatures'")
+  }
+  return(TRUE)
+}
+
+
+mutational_signature_getter <- function(path, SPN_ID, coverage, purity, tools) {
+  
+  qc_args(SPN_ID, coverage, purity, tools)
+  
+  main_path <- paste0(MAIN_PATH, "SPN0", SPN_ID, "/tumourevo/", coverage, "x_", purity, "p/variant_caller_ascat/")
+  
+  object_list <- list()
+  for (tool in tools) {
+    object_list[[tool]] <- mutational_signature_getter_aux(main_path, tool)
+  }
+  return(object_list)
+}
 
 
 
-mutational_signature_getter <- function(path, tool) {
+# input
+  # path: absolute path
+  # tool: c('SigProfiler', 'SparseSignatures')
+mutational_signature_getter_aux <- function(path, tool) {
   if (tool == "SigProfiler") {
     # SigProfiler
     file_paths <- c(
@@ -26,72 +58,6 @@ mutational_signature_getter <- function(path, tool) {
     stop("Invalid!")
   }
 }
-
-PATH <- "/orfeo/cephfs/scratch/cdslab/shared/SCOUT/"
-SPN_ID <- 1
-coverage <- 100
-purity <- 0.6
-variant_caller <- "XXX"
-pipeline <- "signature_deconvolution"
-tool <- "SigProfiler"
-
-
-MAIN_PATH <- paste0("/orfeo/cephfs/scratch/cdslab/shared/SCOUT/", "tumourevo/", 
-                    coverage, "x_", purity, "p/", variant_caller, "_ascat/", 
-                    pipeline, "/")
-
-
-file_paths <- filepath_getter(MAIN_PATH, tool)
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-tools <- list(variant_caller=c("A"), 
-              signature_deconvolution=c("SparseSignatures", "SigProfiler"), 
-              subclonal_deconvolution=c("viber", "ctree", "pyclone", "mobster"))
-
-p <- "signature_deconvolution"
-for (tool in tools[[p]]) {
-  print(tool)
-}
-
-tool <- tools[[p]][1]
-
-paste0(PATH, "SPN0", SPN_ID, "/tumourevo/", coverage, "x_", purity, "p/", "variant_caller_ascat", "/", tool, "Suggested_Solution")
-
-
-tool <- "SigProfiler"
-context <- 96
-signature <- "COSMIC"
-
-sig_type <- ifelse(signature == "COSMIC", "COSMIC_SBS96_Decomposed_Solution", "SBS96_De-Novo_Solution")
-
-ms_path <- paste0("MSeq/signature_deconvolution/", tool, "/results/SBS", context, "/Suggested_Solution/", sig_type)
-exp <- paste0(ms_path, "/Activities/COSMIC_SBS96_Activities.txt")
-sigs <- paste0(ms_path, "/Signatures")
-
-
-
-
-
-
-
-
-
 
 
 
