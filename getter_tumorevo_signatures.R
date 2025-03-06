@@ -20,15 +20,15 @@ qc_args <- function(name, coverage, purity, tools) {
 }
 
 
-mutational_signature_getter <- function(path, SPN_ID, coverage, purity, tools) {
+mutational_signature_getter <- function(MAIN_PATH, SPN_ID, coverage, purity, tools) {
   
   qc_args(SPN_ID, coverage, purity, tools)
   
-  main_path <- paste0(MAIN_PATH, "SPN0", SPN_ID, "/tumourevo/", coverage, "x_", purity, "p/variant_caller_ascat/")
+  path <- paste0(MAIN_PATH, "SPN0", SPN_ID, "/tumourevo/", coverage, "x_", purity, "p/results_tumourevo_mseq/MSeq/signature_deconvolution/")
   
   object_list <- list()
   for (tool in tools) {
-    object_list[[tool]] <- mutational_signature_getter_aux(main_path, tool)
+    object_list[[tool]] <- mutational_signature_getter_aux(path, tool)
   }
   return(object_list)
 }
@@ -39,8 +39,9 @@ mutational_signature_getter <- function(path, SPN_ID, coverage, purity, tools) {
   # path: absolute path
   # tool: c('SigProfiler', 'SparseSignatures')
 mutational_signature_getter_aux <- function(path, tool) {
+  
+  # SigProfiler
   if (tool == "SigProfiler") {
-    # SigProfiler
     file_paths <- c(
       COSMIC_exp = paste0(path, "SigProfiler/results/SBS96/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/Activities/COSMIC_SBS96_Activities.txt"), 
       COSMIC_sig = paste0(path, "SigProfiler/results/SBS96/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/Signatures/COSMIC_SBS96_Signatures.txt"), 
@@ -50,8 +51,8 @@ mutational_signature_getter_aux <- function(path, tool) {
     output <- lapply(file_paths, read.delim)
     names(output) <- basename(file_paths)
     return(output)
+  # SparseSignatures
   } else if (tool == "SparseSignatures") {
-    # SparseSignatures
     output <- readRDS(paste0(path, "SparseSignatures/MSeq_nmf_Lasso_out.rds"))
     return(output)
   } else {
