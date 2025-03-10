@@ -157,7 +157,18 @@ parse_sarek_variant_called_files <- function(list_of_output_files) {
   return(named_files)
 }
 
-
+# identify normal sample in strelka and drop it
+drop_normal <- function(samples_list, normal="normal_sample") {
+  index <- NULL
+  for (i in length(samples_list)) {
+    if (startsWith(basename(samples_list[i]), normal)) {
+      index <- i
+      # found it so break
+      break
+    }
+  }
+  return(samples_list[-index])
+}
 # Returns a multi-layered list structure, where coverage/purity is the first layer,
 # caller is the second, and sample ID is the last, holding variant call files 
 # for each caller/coverage/purity/sample combination.
@@ -189,7 +200,7 @@ batch_retrieve_sarek_variant_caller <- function(basedir,
                                "variant_calling",
                                variant_callers[vc])
           sample_dirs <- list.dirs(path = vc_path)[-1]
-          # samples <- list(rep(NA, length(sample_dirs)))
+          sample_dirs <- drop_normal(sample_dirs)
           samples <- list()
           for (s in 1:length(sample_dirs)) {
             if (variant_callers[vc] == "mutect2") {
@@ -197,7 +208,6 @@ batch_retrieve_sarek_variant_caller <- function(basedir,
               sampleID <- mutect_naming[1]
               patientID <- mutect_naming[3]
             } else {
-              if (startsWith(basename(sample_dirs[s]), "normal_sample")) next
               sampleID <- strsplit(basename(sample_dirs[s]), "_vs_")[[1]][1]
             }
             files_list <- get_sarek_variant_called_files(basedir = basedir,
