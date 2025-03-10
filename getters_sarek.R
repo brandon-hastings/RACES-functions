@@ -44,6 +44,18 @@ get_sarek_variant_called_files <- function(basedir,
                                   sample_naming
                                   ))
   }
+  if (length(output_files) == 0) {
+    print(file.path(basedir, SPN_id_number, "sarek",
+                                  paste(as.character(coverage),
+                                        "x_",
+                                        as.character(purity),
+                                        "p"),
+                                  "variant_calling",
+                                  variant_caller,
+                                  sample_naming
+                                  ))
+    stop("error in file path")
+    }
   return(output_files)
 }
 
