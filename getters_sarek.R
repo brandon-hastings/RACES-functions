@@ -167,7 +167,11 @@ drop_normal <- function(samples_list, normal="normal_sample") {
       break
     }
   }
-  return(samples_list[-index])
+  if (is.null(index)) {
+    return(samples_list)
+  } else {
+    return(samples_list[-index])
+  }
 }
 # Returns a multi-layered list structure, where coverage/purity is the first layer,
 # caller is the second, and sample ID is the last, holding variant call files 
