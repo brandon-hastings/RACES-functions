@@ -24,6 +24,7 @@ mutational_signature_getter <- function(MAIN_PATH, SPN_ID, coverage, purity, too
   
   qc_args(SPN_ID, coverage, purity, tools)
   
+  # TODO: MSeq is the sample name if I remember correctly, so will be variable
   path <- paste0(MAIN_PATH, "SPN0", SPN_ID, "/tumourevo/", coverage, "x_", purity, "p/results_tumourevo_mseq/MSeq/signature_deconvolution/")
   
   object_list <- list()
@@ -41,6 +42,8 @@ mutational_signature_getter <- function(MAIN_PATH, SPN_ID, coverage, purity, too
 mutational_signature_getter_aux <- function(path, tool) {
   
   # SigProfiler
+  # TODO: will signatures (i.e. SBS96) always be the same or should they be
+  # open to user input?
   if (tool == "SigProfiler") {
     file_paths <- c(
       COSMIC_exp = paste0(path, "SigProfiler/results/SBS96/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/Activities/COSMIC_SBS96_Activities.txt"), 
@@ -53,6 +56,7 @@ mutational_signature_getter_aux <- function(path, tool) {
     return(output)
   # SparseSignatures
   } else if (tool == "SparseSignatures") {
+    # TODO: Mseq sample name see line 27
     output <- readRDS(paste0(path, "SparseSignatures/MSeq_nmf_Lasso_out.rds"))
     return(output)
   } else {
