@@ -113,6 +113,11 @@ getter_races <- function(MAIN_PATH = "/orfeo/cephfs/scratch/cdslab/shared/SCOUT/
   
   type <- tolower(type)
   
+  if ( !endsWith(MAIN_PATH) ) {
+    MAIN_PATH <- paste0(MAIN_PATH, "/")
+  }
+  
+  
   tryCatch(
     {
       qc_args(SPN_ID, coverage, purity, timepoint, sample_id, type)
