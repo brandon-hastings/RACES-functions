@@ -197,6 +197,7 @@ batch_retrieve_sarek_variant_caller <- function(basedir,
               sampleID <- mutect_naming[1]
               patientID <- mutect_naming[3]
             } else {
+              if (startsWith(basename(sample_dirs[s]), "normal_sample")) next
               sampleID <- strsplit(basename(sample_dirs[s]), "_vs_")[[1]][1]
             }
             files_list <- get_sarek_variant_called_files(basedir = basedir,
