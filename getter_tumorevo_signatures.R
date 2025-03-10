@@ -3,7 +3,7 @@
 
 # quality control the input parameters
 #-------------------------------------------------------------------------------
-qc_args <- function(name, coverage, purity, tools) {
+qc_args <- function(name, coverage, purity, tools, dataset, context) {
   if (!is.numeric(name) || name %% 1 != 0) {
     stop("Error: 'name' must be integer") # name : integer
   }
@@ -16,20 +16,29 @@ qc_args <- function(name, coverage, purity, tools) {
   if (!(tools %in% c("SigProfiler", "SparseSignatures"))) {
     stop("Error: 'type' must be one of 'SigProfiler' and 'SparseSignatures'")
   }
+  if (!is.character(dataset)) {
+    stop("Error: 'dataset' must be string") # dataset : string
+  }
+  if (!is.character(context)) {
+    stop("Error: 'context' must be string") # context : string
+  }
   return(TRUE)
 }
 
 
-mutational_signature_getter <- function(MAIN_PATH, SPN_ID, coverage, purity, tools) {
+mutational_signature_getter <- function(MAIN_PATH, SPN_ID, coverage, purity, tools, dataset, context) {
   
-  qc_args(SPN_ID, coverage, purity, tools)
+  qc_args(SPN_ID, coverage, purity, tools, dataset)
   
   # TODO: MSeq is the sample name if I remember correctly, so will be variable
-  path <- paste0(MAIN_PATH, "SPN0", SPN_ID, "/tumourevo/", coverage, "x_", purity, "p/results_tumourevo_mseq/MSeq/signature_deconvolution/")
+  path <- paste0(MAIN_PATH, "SPN0", SPN_ID, "/tumourevo/", coverage, "x_", purity, "p/results_tumourevo_", tolower(dataset), "/", dataset, "/signature_deconvolution/")
   
   object_list <- list()
   for (tool in tools) {
-    object_list[[tool]] <- mutational_signature_getter_aux(path, tool)
+    object_list[[tool]] <- mutational_signature_getter_aux(path, tool, context)
+  }
+  if (is.null(object_list)) {
+    stop("nothing found!")
   }
   return(object_list)
 }
@@ -39,17 +48,17 @@ mutational_signature_getter <- function(MAIN_PATH, SPN_ID, coverage, purity, too
 # input
   # path: absolute path
   # tool: c('SigProfiler', 'SparseSignatures')
-mutational_signature_getter_aux <- function(path, tool) {
+mutational_signature_getter_aux <- function(path, tool, context) {
   
   # SigProfiler
   # TODO: will signatures (i.e. SBS96) always be the same or should they be
   # open to user input?
   if (tool == "SigProfiler") {
     file_paths <- c(
-      COSMIC_exp = paste0(path, "SigProfiler/results/SBS96/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/Activities/COSMIC_SBS96_Activities.txt"), 
-      COSMIC_sig = paste0(path, "SigProfiler/results/SBS96/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/Signatures/COSMIC_SBS96_Signatures.txt"), 
-      DENOVO_exp = paste0(path, "SigProfiler/results/SBS96/Suggested_Solution/SBS96_De-Novo_Solution/Activities/SBS96_De-Novo_Activities_refit.txt"), 
-      DENOVO_sig = paste0(path, "SigProfiler/results/SBS96/Suggested_Solution/SBS96_De-Novo_Solution/Signatures/SBS96_De-Novo_Signatures.txt")
+      COSMIC_exp = paste0(path, "SigProfiler/results/", toupper(context), "/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/Activities/COSMIC_SBS96_Activities.txt"), 
+      COSMIC_sig = paste0(path, "SigProfiler/results/", toupper(context), "/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/Signatures/COSMIC_SBS96_Signatures.txt"), 
+      DENOVO_exp = paste0(path, "SigProfiler/results/", toupper(context), "/Suggested_Solution/SBS96_De-Novo_Solution/Activities/SBS96_De-Novo_Activities_refit.txt"), 
+      DENOVO_sig = paste0(path, "SigProfiler/results/", toupper(context), "/Suggested_Solution/SBS96_De-Novo_Solution/Signatures/SBS96_De-Novo_Signatures.txt")
     )
     output <- lapply(file_paths, read.delim)
     names(output) <- basename(file_paths)
