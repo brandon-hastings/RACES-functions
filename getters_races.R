@@ -28,36 +28,45 @@ qc_args <- function(name, coverage, purity, timepoint, sample_id, type) {
     stop("Error: 'sample_id' must be integer") # sample_id : integer
   }
   if (!(type %in% c("snv", "cna", "phylo"))) {
-    stop("Error: 'type' must be one of 'SNV' and 'CNA'")
+    stop("Error: 'type' must be one of 'SNV', 'CNA' and 'phylo'")
   }
   return(TRUE)
 }
 
+
 # generate the pattern for string matching for each required scenario
 #-------------------------------------------------------------------------------
-gen_ptr <- function(SPN_ID, timepoint, sample_id, type) {
+
+gen_ptr <- function(MAIN_PATH, SPN_ID, coverage, purity, timepoint, sample_id, type) {
   
   if (type == "cna") {
+    path <- paste0(MAIN_PATH, "SPN0", SPN_ID, "/races/cna_data/")
     timepoint_ph <- ifelse(test = is.null(timepoint), yes = "\\d+", no = timepoint)
     sample_id_ph <- ifelse(test = is.null(sample_id), yes = "\\d+", no = sample_id)
     ptr <- paste0("^SPN0", SPN_ID, "_", timepoint_ph, "\\.", sample_id_ph, "_cna\\.rds$")
-    return(ptr)
+    return( c(path, ptr) )
   }
   
   else if (type == "snv") {
-    ptr <- paste0("SPN0", SPN_ID, "/races/purity_", purity, "/seq_results_muts_merged_coverage_", coverage, "x.rds")
-    return(ptr)
+    path <- paste0(MAIN_PATH, "SPN0", SPN_ID, "/races/purity_", purity, "/")
+    coverage_ph <- ifelse(test = is.null(coverage), yes = "\\d+", no = coverage)
+    #purity_ph <- ifelse(test = is.null(purity), yes = "\\d+", no = purity)
+    ptr <- paste0("seq_results_muts_merged_coverage_", coverage_ph, "x.rds")
+    return( c(path, ptr) )
   }
   
   else if (type == "phylo") {
-    ptr <- paste0("SPN0", SPN_ID, "/races/phylo_forest.sff")
-    return(ptr)
+    path <- paste0(MAIN_PATH, "SPN0", SPN_ID, "/races/")
+    ptr <- paste0("phylo_forest.sff")
+    return( c(path, ptr) )
   }
   
   else {
-    stop("Error: invalid!")
+    stop("Error in 'gen_ptr' function")
   }
 }
+
+
 
 # return list of absolute file paths as a result of string matching
 #-------------------------------------------------------------------------------
@@ -94,7 +103,7 @@ load_multiple_rds <- function(file_paths) {
   # type      : ("cna", "snv", "phylo")
 # output:
   # list of file object
-getter_races <- function(PATH = "/orfeo/cephfs/scratch/cdslab/shared/SCOUT/", 
+getter_races <- function(MAIN_PATH = "/orfeo/cephfs/scratch/cdslab/shared/SCOUT/", 
                          SPN_ID = 1, 
                          coverage = 100, 
                          purity = 0.6, 
@@ -102,24 +111,30 @@ getter_races <- function(PATH = "/orfeo/cephfs/scratch/cdslab/shared/SCOUT/",
                          sample_id = NULL, 
                          type = "cna") {
   
-  type <- tolwer(type)
+  type <- tolower(type)
   
   tryCatch(
     {
-      qc_args(name=SPN_ID, coverage=coverage, purity=purity, timepoint=timepoint, sample_id=sample_id, type=type)
-      ptr <- gen_ptr(SPN_ID, timepoint, sample_id, type)
-      #message(ptr)
-      files_list <- search_files(directory=PATH, ptr)
+      qc_args(SPN_ID, coverage, purity, timepoint, sample_id, type)
       
-      if (type=="phylo") {
-        return(rRACES::load_phylogenetic_forest(files_list))
+      #files_list <- search_files(directory=PATH, ptr)
+      
+      if ( type %in% c("snv", "cna") ) {
+        x <- gen_ptr(MAIN_PATH, SPN_ID, coverage, purity, timepoint, sample_id, type)
+        path <- x[1]
+        ptr <- x[2]
+        files_list <- search_files(path, ptr)
+        if (length(files_list) != 0) {
+          return(load_multiple_rds(files_list))
+        }
+      }
+      else if (type=="phylo") {
+        x <- gen_ptr(MAIN_PATH, SPN_ID, coverage, purity, timepoint, sample_id, type)
+        #f <- paste0(PATH, "SPN0", SPN_ID, "/races/phylo_forest.sff")
+        return(rRACES::load_phylogenetic_forest(paste0(x[1], x[2])))
       }
       
-      if ( length(files_list) != 0 ) {
-        return(load_multiple_rds(files_list))
-      }
-      
-      # if nothing find
+      # if nothing found
       else {
         message("NOT FOUND!")
         return(NULL)
@@ -137,8 +152,5 @@ getter_races <- function(PATH = "/orfeo/cephfs/scratch/cdslab/shared/SCOUT/",
     }
   )
 }
-
-
-
 
 
