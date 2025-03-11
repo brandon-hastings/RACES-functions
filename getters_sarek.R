@@ -161,7 +161,8 @@ parse_sarek_variant_called_files <- function(list_of_output_files) {
 drop_normal <- function(samples_list, normal="normal_sample") {
   index <- NULL
   print(samples_list)
-  for (i in length(samples_list)) {
+  print(length(samples_list))
+  for (i in 1:length(samples_list)) {
     print(basename(samples_list[i]))
     if (basename(samples_list[i]) == normal) {
       print(basename(samples_list[i]))
