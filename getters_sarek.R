@@ -160,13 +160,17 @@ parse_sarek_variant_called_files <- function(list_of_output_files) {
 # identify normal sample in strelka and drop it
 drop_normal <- function(samples_list, normal="normal_sample") {
   index <- NULL
+  print(samples_list)
   for (i in length(samples_list)) {
-    if (startsWith(basename(samples_list[i]), normal)) {
+    print(basename(samples_list[i]))
+    if (basename(samples_list[i]) == normal) {
+      print(basename(samples_list[i]))
       index <- i
-      # found it so break
-      break
+    } else {
+      next
     }
   }
+  print(index)
   if (is.null(index)) {
     return(samples_list)
   } else {
