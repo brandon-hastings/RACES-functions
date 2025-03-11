@@ -104,13 +104,7 @@ parse_sarek_variant_called_files <- function(list_of_output_files) {
     named_files <- list(rep(NA, length(list_of_output_files)))
     # check for substrings in each file to tell us what the file is
     for (i in 1:length(list_of_output_files)) {
-      if (endsWith(list_of_output_files[i], "indels.vcf.gz")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "indels_vcf" 
-      } else if (endsWith(list_of_output_files[i], "indels.vcf.gz.tbi")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "indels_tbi" 
-      } else if (endsWith(list_of_output_files[i], "snvs.vcf.gz")) {
+      if (endsWith(list_of_output_files[i], "snvs.vcf.gz")) {
         named_files[i] <- list_of_output_files[i]
         names(named_files)[i] <- "snvs_vcf" 
       } else if (endsWith(list_of_output_files[i], "snvs.vcf.gz.tbi")) {

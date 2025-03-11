@@ -162,7 +162,7 @@ create_tumourevo_samplesheet <- function(basedir,
     tumourevo_samplesheet <- apply(tumourevo_samplesheet,2,as.character)
 
     # save samplesheet as csv
-    filename <- file.path(basedir, "tumourevo", "samplesheet.csv")
+    filename <- file.path(outdir, "samplesheet.csv")
     write.csv(tumourevo_samplesheet, file = filename)
     # check exist and return message
     if (file.exists(filename)) {
