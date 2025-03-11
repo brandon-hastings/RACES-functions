@@ -163,7 +163,7 @@ create_tumourevo_samplesheet <- function(basedir,
 
     # save samplesheet as csv
     filename <- file.path(outdir, "samplesheet.csv")
-    write.csv(tumourevo_samplesheet, file = filename)
+    write.csv(tumourevo_samplesheet, file = filename, row.names=FALSE)
     # check exist and return message
     if (file.exists(filename)) {
       print(paste0("samplesheet created at ", filename))
