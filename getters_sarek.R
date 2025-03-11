@@ -62,6 +62,7 @@ get_sarek_variant_called_files <- function(basedir,
 # take a list of filenames from strelka, mutect2, or ascat and structure them 
 # into a named list
 parse_sarek_variant_called_files <- function(list_of_output_files) {
+  print(list_of_output_files)
   # check which caller we are looking at
   if (grepl("mutect", as.character(list_of_output_files[1]), fixed = TRUE)) {
     named_files <- list(rep(NA, length(list_of_output_files)))
@@ -130,6 +131,7 @@ parse_sarek_variant_called_files <- function(list_of_output_files) {
       }
     }
   }
+  named_files <- named_files[!is.na(names(named_files))]
   return(named_files)
 }
 
