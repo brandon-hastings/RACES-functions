@@ -121,36 +121,12 @@ parse_sarek_variant_called_files <- function(list_of_output_files) {
     named_files <- list(rep(NA, length(list_of_output_files)))
     # check for substrings in each file to tell us what the file is
     for (i in 1:length(list_of_output_files)) {
-      if (endsWith(list_of_output_files[i], "tumour.ASCATprofile.png")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "cn_profile_image" 
-      } else if (endsWith(list_of_output_files[i], "tumour.ASPCF.png")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "cn_segmentation_image" 
-      } else if (endsWith(list_of_output_files[i], "tumour.sunrise.png")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "sunrise_image" 
-      } else if (endsWith(list_of_output_files[i], "cnvs.txt")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "cnvs" 
-      } else if (endsWith(list_of_output_files[i], "purityploidy.txt")) {
+      if (endsWith(list_of_output_files[i], "purityploidy.txt")) {
         named_files[i] <- list_of_output_files[i]
         names(named_files)[i] <- "purity_ploidy" 
       } else if (endsWith(list_of_output_files[i], "segments.txt")) {
         named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "segments" 
-      } else if (endsWith(list_of_output_files[i], "tumour_tumourBAF.txt")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "tumour_baf" 
-      } else if (endsWith(list_of_output_files[i], "tumour_normalBAF.txt")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "normal_baf"
-      } else if (endsWith(list_of_output_files[i], "tumour_tumourLogR.txt")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "tumour_logR" 
-      } else if (endsWith(list_of_output_files[i], "tumour_normalLogR.txt")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "normal_logR"
+        names(named_files)[i] <- "segments"
       }
     }
   }

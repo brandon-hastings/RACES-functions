@@ -73,6 +73,7 @@ format_samplesheet <- function(samplesheet, cna_caller, cancer_type, normalID) {
 
 column_naming <- function(samplesheet, caller) {
   print(caller)
+  print(str(samplesheet))
   if (caller == "strelka") {
     if (endsWith(samplesheet[1,1][[1]], "vcf.gz")) {
       colnames(samplesheet) <- c("vcf", "tbi")
@@ -143,6 +144,7 @@ create_tumourevo_samplesheet <- function(basedir,
                                                 normalID = normalID)
   # process from batch structure, even if only one coverage/purity is given
   # make a dataframe for each coverage/purity combination
+  print(str(getter))
   for (c_p in getter) {
     # combine snp and cna caller on samples, return all files as columns
     raw_samplesheet <- callers_to_data_frame(c_p)
