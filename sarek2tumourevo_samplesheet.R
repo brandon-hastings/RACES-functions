@@ -61,20 +61,13 @@ tumoruevo_patient_sample_naming <- function(samplesheet, snp_caller) {
   samplesheet$tumour_sample <- samples
   samplesheet$samples <- NULL
   return(samplesheet)
-  # take sample dir naming from row names
-  # split on _vs_
-  # first one will be SPN01_{PATIENT}.{SAMPLE}
 }
 
 format_samplesheet <- function(samplesheet, cna_caller, cancer_type, normalID) {
-  # renamed_samplesheet <- samplesheet %>% 
-  #   rename_at(vars(contains("vcf")), ~ "vcf") %>% 
-  #   rename_at(vars(contains("tbi")), ~ "tbi") %>% 
-  #   rename_at(vars(contains("segments")), ~ "cna_segments") %>% 
-  #   rename_at(vars(contains("purity_ploidy")), ~ "cna_extra")
   samplesheet$cna_caller <- c(rep(cna_caller, nrow(samplesheet)))
   samplesheet$cancer_type <- c(rep(cancer_type, nrow(samplesheet)))
   samplesheet$normal_sample <- c(rep(normalID, nrow(samplesheet)))
+  print(str(samplesheet))
   return(samplesheet)
   
 }
@@ -93,7 +86,6 @@ column_naming <- function(samplesheet, caller) {
       colnames(samplesheet) <- c("cna_segments", "cna_extra")
     }
   }
-  print(str(samplesheet))
   return(samplesheet)
 }
 
@@ -112,6 +104,7 @@ callers_to_data_frame <- function(caller_list) {
       first_df <- df
     } else {
       raw_samplesheet <-left_join(first_df, df)
+      print(str(raw_samplesheet))
       # don't know why it doubles but will fix
       return(raw_samplesheet)
     }
@@ -150,7 +143,6 @@ create_tumourevo_samplesheet <- function(basedir,
                                                 normalID = normalID)
   # process from batch structure, even if only one coverage/purity is given
   # make a dataframe for each coverage/purity combination
-  print(str(getter))
   for (c_p in getter) {
     # combine snp and cna caller on samples, return all files as columns
     raw_samplesheet <- callers_to_data_frame(c_p)
