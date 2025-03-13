@@ -73,6 +73,9 @@ format_samplesheet <- function(samplesheet, cna_caller, cancer_type, normalID) {
 }
 
 column_naming <- function(samplesheet, caller) {
+  if (ncol(samplesheet) > 2) {
+    stop("samplesheet size too big")
+  }
   if (caller %in% c("strelka", "mutect2", "freebayes")) {
     if (endsWith(samplesheet[1,1][[1]], "vcf.gz")) {
       colnames(samplesheet) <- c("vcf", "tbi")

@@ -43,6 +43,7 @@ get_sarek_variant_called_files <- function(basedir,
                                 )
     output_files <- list.files(path_to_files, full.names = TRUE)
   }
+  print(output_files)
   return(output_files)
 }
 
@@ -100,7 +101,11 @@ parse_sarek_variant_called_files <- function(list_of_output_files) {
       }
     }
   }
+  print(str(named_files))
   named_files <- named_files[!is.na(names(named_files))]
+  print(str(named_files))
+  named_files <- named_files[!sapply(named_files, is.null)]
+  print(str(named_files))
   return(named_files)
 }
 
@@ -189,6 +194,7 @@ batch_retrieve_sarek_variant_caller <- function(basedir,
             sample_dirs <- drop_normal(sample_dirs, normal=joint_called_dir_name)
             for (s in 1:length(sample_dirs)) {
               parsed_files <- parse_sarek_variant_called_files(files_list)
+	      print(parsed_files)
               samples <- append(samples, list(parsed_files))
               sampleID <- basename(sample_dirs[s])
               # SPN01_SPN01_1.3
