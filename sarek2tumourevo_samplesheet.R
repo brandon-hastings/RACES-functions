@@ -48,6 +48,14 @@ tumoruevo_patient_sample_naming <- function(samplesheet, snp_caller) {
       patients <- append(patients, sep_patient_sample[i][[1]][1])
       samples <- append(samples, sep_patient_sample[i][[1]][2])
     }
+  } else {
+    sample_dir_name <- samplesheet$samples
+    # joint_patient_sample <- lapply(sample_dir_name, function(x) strsplit(x, split = "_vs_", fixed = TRUE)[[1]][1])
+    sep_patient_sample <- lapply(sample_dir_name, function(x) strsplit(x, split = ".", fixed = TRUE)[[1]])
+    for (i in 1:length(sep_patient_sample)) {
+      patients <- append(patients, sep_patient_sample[i][[1]][1])
+      samples <- append(samples, sep_patient_sample[i][[1]][2])
+    }
   }
   samplesheet$patient <- patients
   samplesheet$tumour_sample <- samples
@@ -72,8 +80,6 @@ format_samplesheet <- function(samplesheet, cna_caller, cancer_type, normalID) {
 }
 
 column_naming <- function(samplesheet, caller) {
-  print(caller)
-  print(str(samplesheet))
   if (caller %in% c("strelka", "mutect2", "freebayes")) {
     if (endsWith(samplesheet[1,1][[1]], "vcf.gz")) {
       colnames(samplesheet) <- c("vcf", "tbi")
@@ -164,7 +170,6 @@ create_tumourevo_samplesheet <- function(basedir,
     # save samplesheet as csv
     filename <- file.path(outdir, "samplesheet.csv")
     write.csv(tumourevo_samplesheet, file = filename, row.names=FALSE)
-    # check exist and return message
     if (file.exists(filename)) {
       print(paste0("samplesheet created at ", filename))
     }
