@@ -9,16 +9,13 @@ get_sarek_variant_called_files <- function(basedir,
                                            patientID=NULL) {
   # testing
   # input checking
-  accepted_callers <- c("mutect2", "strelka", "ascat")
+  accepted_callers <- c("mutect2", "strelka", "ascat", "freebayes")
   if (!(variant_caller %in% accepted_callers)) {
     stop("Variant caller not supported. Or check spelling of variant_caller arg.")
   }
-  if (is.null(patientID) & variant_caller == "mutect2") {
-    stop("getting mutect2 requires patientID")
-  }
   
   # get files
-  if (variant_caller %in% c("strelka", "ascat")) {
+  if (variant_caller %in% c("strelka", "ascat", "freebayes")) {
     sample_naming <- paste0(sampleID, "_vs_", normalID)
     path_to_files <- file.path(basedir, "sarek",
                                paste0(as.character(coverage),
@@ -30,31 +27,22 @@ get_sarek_variant_called_files <- function(basedir,
                                sample_naming)
     output_files <- list.files(path_to_files, full.names = TRUE)
   } else if (variant_caller == "mutect2") {
-    sample_naming <- paste(sampleID, paste(sampleID,
-                                           "_vs_",
-                                           normalID),
-                           patientID, sep = ",")
-    output_files <- list.files(file.path(basedir, SPN_id_number, "sarek",
-                                  paste(as.character(coverage),
-                                        "x_",
-                                        as.character(purity),
-                                        "p"),
-                                  "variant_calling",
-                                  variant_caller,
-                                  sample_naming
-                                  ))
+    # sample_naming <- paste(sampleID, paste(sampleID,
+    #                                        "_vs_",
+    #                                        normalID),
+    #                        patientID, sep = ",")
+    sample_naming <- sampleID
+    path_to_files <- file.path(basedir, "sarek",
+                                paste0(as.character(coverage),
+                                      "x_",
+                                      as.character(purity),
+                                      "p"),
+                                "variant_calling",
+                                variant_caller,
+                                sample_naming
+                                )
+    output_files <- list.files(path_to_files, full.names = TRUE)
   }
-  if (length(output_files) == 0) {
-    print(file.path(basedir, "sarek",
-                               paste0(as.character(coverage),
-                                     "x_",
-                                     as.character(purity),
-                                     "p"),
-                               "variant_calling",
-                               variant_caller,
-                               sample_naming))
-    stop("error in file path")
-    }
   return(output_files)
 }
 
@@ -62,42 +50,17 @@ get_sarek_variant_called_files <- function(basedir,
 # take a list of filenames from strelka, mutect2, or ascat and structure them 
 # into a named list
 parse_sarek_variant_called_files <- function(list_of_output_files) {
-  print(list_of_output_files)
   # check which caller we are looking at
   if (grepl("mutect", as.character(list_of_output_files[1]), fixed = TRUE)) {
     named_files <- list(rep(NA, length(list_of_output_files)))
     # check for substrings in each file to tell us what the file is
     for (i in 1:length(list_of_output_files)) {
-      if (endsWith(list_of_output_files[i], "vcf.gz")) {
+      if (endsWith(list_of_output_files[i], "filtered.vcf.gz")) {
         named_files[i] <- list_of_output_files[i]
         names(named_files)[i] <- "vcf" 
-      } else if (endsWith(list_of_output_files[i], "vcf.gz.tbi")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "tbi" 
-      } else if (endsWith(list_of_output_files[i], "vcf.gz.stats")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "stats" 
-      } else if (endsWith(list_of_output_files[i], "contamination.table")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "contamination_table" 
-      } else if (endsWith(list_of_output_files[i], "segmentation.table")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "segmentation_table" 
-      } else if (endsWith(list_of_output_files[i], "artifactprior.tar.gz")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "artifactprior" 
-      } else if (endsWith(list_of_output_files[i], "pileups.table")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "pileups_table" 
-      } else if (endsWith(list_of_output_files[i], "filtered.vcf.gz")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "filtered_vcf"
       } else if (endsWith(list_of_output_files[i], "filtered.vcf.gz.tbi")) {
         named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "filtered_tbi" 
-      } else if (endsWith(list_of_output_files[i], "filteringStats.tsv")) {
-        named_files[i] <- list_of_output_files[i]
-        names(named_files)[i] <- "filtered_stats"
+        names(named_files)[i] <- "tbi" 
       }
     }
   } else if (grepl("strelka", as.character(list_of_output_files[1]), fixed = TRUE)) {
@@ -110,6 +73,18 @@ parse_sarek_variant_called_files <- function(list_of_output_files) {
       } else if (endsWith(list_of_output_files[i], "snvs.vcf.gz.tbi")) {
         named_files[i] <- list_of_output_files[i]
         names(named_files)[i] <- "snvs_tbi" 
+      }
+    }
+  } else if (grepl("freebayes", as.character(list_of_output_files[1]), fixed = TRUE)) {
+    named_files <- list(rep(NA, length(list_of_output_files)))
+    # check for substrings in each file to tell us what the file is
+    for (i in 1:length(list_of_output_files)) {
+      if (endsWith(list_of_output_files[i], "freebayes.vcf.gz")) {
+        named_files[i] <- list_of_output_files[i]
+        names(named_files)[i] <- "vcf" 
+      } else if (endsWith(list_of_output_files[i], "freebayes.vcf.gz.tbi")) {
+        named_files[i] <- list_of_output_files[i]
+        names(named_files)[i] <- "tbi" 
       }
     }
   } else if (grepl("ascat", as.character(list_of_output_files[1]), fixed = TRUE)) {
@@ -130,22 +105,21 @@ parse_sarek_variant_called_files <- function(list_of_output_files) {
 }
 
 # identify normal sample in strelka and drop it
-drop_normal <- function(samples_list, normal="normal_sample") {
+drop_normal <- function(samples_list,
+                        normal="normal_sample",
+                        return_normal=FALSE) {
   index <- NULL
-  print(samples_list)
-  print(length(samples_list))
   for (i in 1:length(samples_list)) {
-    print(basename(samples_list[i]))
     if (basename(samples_list[i]) == normal) {
-      print(basename(samples_list[i]))
       index <- i
     } else {
       next
     }
   }
-  print(index)
   if (is.null(index)) {
     return(samples_list)
+  } else if (return_normal == TRUE) {
+    return(index)
   } else {
     return(samples_list[-index])
   }
@@ -181,28 +155,49 @@ batch_retrieve_sarek_variant_caller <- function(basedir,
                                "variant_calling",
                                variant_callers[vc])
           sample_dirs <- list.dirs(path = vc_path)[-1]
+          # TODO: solve for mutect but can't just move it into if block
           sample_dirs <- drop_normal(sample_dirs)
           samples <- list()
-          for (s in 1:length(sample_dirs)) {
-            if (variant_callers[vc] == "mutect2") {
-              mutect_naming <- strsplit(basename(sample_dirs[s]), ",")[[1]]
-              sampleID <- mutect_naming[1]
-              patientID <- mutect_naming[3]
-            } else {
+          if (variant_callers[vc] != "mutect2") {
+            for (s in 1:length(sample_dirs)) {
               sampleID <- strsplit(basename(sample_dirs[s]), "_vs_")[[1]][1]
+              files_list <- get_sarek_variant_called_files(basedir = basedir,
+                                                           coverage = coverage[c],
+                                                           purity = purity[p],
+                                                           variant_caller = variant_callers[vc],
+                                                           sampleID = sampleID,
+                                                           normalID = normalID,
+                                                           patientID = patientID)
+              parsed_files <- parse_sarek_variant_called_files(files_list)
+              patientID <- NULL
+              samples <- append(samples, list(parsed_files))
             }
-            files_list <- get_sarek_variant_called_files(basedir = basedir,
-                                                         coverage = coverage[c],
-                                                         purity = purity[p],
-                                                         variant_caller = variant_callers[vc],
-                                                         sampleID = sampleID,
-                                                         normalID = normalID,
-                                                         patientID = patientID)
-            parsed_files <- parse_sarek_variant_called_files(files_list)
-            patientID <- NULL
-            samples <- append(samples, list(parsed_files))
+            names(samples) <- lapply(sample_dirs, basename)
           }
-        names(samples) <- lapply(sample_dirs, basename)
+          else if (variant_callers[vc] == "mutect2") {
+            # same as SPN ID
+            joint_called_dir_name <- basename(file.path(basedir))
+            # get the joint called files once
+            files_list <- get_sarek_variant_called_files(basedir = basedir,
+                                                                   coverage = coverage[c],
+                                                                   purity = purity[p],
+                                                                   variant_caller = variant_callers[vc],
+                                                                   sampleID = joint_called_dir_name,
+                                                                   normalID = normalID,
+                                                                   patientID = patientID)
+            # drop the joint called folder from samples
+            sample_dirs <- drop_normal(sample_dirs, normal=joint_called_dir_name)
+            for (s in 1:length(sample_dirs)) {
+              parsed_files <- parse_sarek_variant_called_files(files_list)
+              samples <- append(samples, list(parsed_files))
+              sampleID <- basename(sample_dirs[s])
+              # SPN01_SPN01_1.3
+            }
+            print(lapply(sample_dirs, basename))
+            names(samples) <- lapply(sample_dirs, basename)
+            # names(samples) <- lapply(lapply(sample_dirs, basename), function(x)paste0(joint_called_dir_name, "_", x))
+          }
+        # names(samples) <- lapply(sample_dirs, basename)
         callers <- append(callers, list(samples))
         }
       names(callers) <- variant_callers

@@ -74,7 +74,7 @@ format_samplesheet <- function(samplesheet, cna_caller, cancer_type, normalID) {
 column_naming <- function(samplesheet, caller) {
   print(caller)
   print(str(samplesheet))
-  if (caller == "strelka") {
+  if (caller %in% c("strelka", "mutect2", "freebayes")) {
     if (endsWith(samplesheet[1,1][[1]], "vcf.gz")) {
       colnames(samplesheet) <- c("vcf", "tbi")
     } else {
