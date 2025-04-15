@@ -1,133 +1,84 @@
 
-
-
-
-
-# quality control the input parameters
-#-------------------------------------------------------------------------------
-qc_args <- function(name, coverage, purity, tools) {
-  if (!is.numeric(name) || name %% 1 != 0) {
-    stop("Error: 'name' must be integer") # name : integer
+#===============================================================================
+# mobster getter
+#===============================================================================
+mobster_getter <- function(dataset, patient_id = NULL, sample_id = NULL) {
+  
+  p1 <- paste0("reuslts_tumorevo_", tolower(dataset), "/subclonal_deconvolution/mobster/", dataset, "/")
+  
+  if ( is.null(patient_id) & is.null(sample_id) ) {
+    files <- list.files(p1, pattern = "*_mobsterh_st_best_fit.rds", full.names = TRUE, recursive = TRUE) # List all RDS files
+  } else if ( !is.null(patient_id) & is.null(sample_id) ) {
+    p2 <- paste0(p1, patient_id, "/")
+    files <- list.files(p2, pattern = "*_mobsterh_st_best_fit.rds", full.names = TRUE, recursive = TRUE) # List all RDS files
+  } else if ( !is.null(patient_id) & !is.null(sample_id) ) {
+    p2 <- paste0(p1, patient_id, "/")
+    files <- list.files(p2, pattern = paste0("*_", sample_id, "_mobsterh_st_best_fit.rds"), full.names = TRUE, recursive = TRUE) # List all RDS files
+  } else {
+    stop("something wrong!")
   }
-  if (!is.numeric(coverage) || coverage %% 1 != 0) {
-    stop("Error: 'coverage' must be integer") # coverage : integer
-  }
-  if (!is.numeric(purity) || (purity > 1 || purity < 0)) {
-    stop("Error: 'purity' must be a number between 0 and 1") # purity : float [0, 1]
-  }
-  if (!(tools %in% c("mobster", "pyclonevi", "viber"))) {
-    stop("Error: 'type' must be one of 'mobster', 'pyclonevi' and 'viber'")
-  }
-  return(TRUE)
+  return(files)
 }
 
 
-getter_mobster <- function(directory, patient_id = NULL, sample_id = NULL) {
-  # List all RDS files in the directory
-  files <- list.files(directory, pattern = "*.rds", full.names = TRUE, recursive = TRUE)
+#===============================================================================
+# pyclonevi getter
+#===============================================================================
+pyclonevi_getter <- function(dataset, patient_id = NULL) {
   
-  # Construct regex pattern dynamically
-  patient_pattern <- if (!is.null(patient_id)) paste0("MSeq_", patient_id, "_") else "MSeq_.*_"
-  sample_pattern  <- if (!is.null(sample_id)) paste0(sample_id, "_") else ".*_"
+  p1 <- paste0("reuslts_tumorevo_", tolower(dataset), "/subclonal_deconvolution/pyclonevi/", dataset, "/")
   
-  # Complete pattern
-  pattern <- paste0(patient_pattern, ".*_", sample_pattern, "mobsterh_st_best_fit\\.rds$")
-  
-  # Filter files matching the pattern
-  matching_files <- files[grepl(pattern, files)]
-  
-  return(matching_files)
-}
-
-
-getter_pyclonevi <- function(directory, patient_id = NULL) {
-  # List all RDS files in the directory
-  files <- list.files(directory, pattern = "*.txt", full.names = TRUE, recursive = TRUE)
-  
-  # Construct regex pattern dynamically
-  patient_pattern <- if (!is.null(patient_id)) paste0("MSeq_", patient_id, "_") else "MSeq_.*_"
-  #sample_pattern  <- if (!is.null(sample_id)) paste0(sample_id, "_") else ".*_"
-  
-  # Complete pattern
-  pattern <- paste0(patient_pattern, ".*_", "remove_tail_all_best_fit\\.txt$")
-  
-  # Filter files matching the pattern
-  matching_files <- files[grepl(pattern, files)]
-  
-  return(matching_files)
-}
-
-
-getter_viber <- function(directory, patient_id = NULL) {
-  # List all RDS files in the directory
-  files <- list.files(directory, pattern = "*.rds", full.names = TRUE, recursive = TRUE)
-  
-  # Construct regex pattern dynamically
-  patient_pattern <- if (!is.null(patient_id)) paste0("MSeq_", patient_id, "_") else "MSeq_.*_"
-  #sample_pattern  <- if (!is.null(sample_id)) paste0(sample_id, "_") else ".*_"
-  
-  # Complete pattern
-  pattern <- paste0(patient_pattern, "remove_tail_all_viber_best_st_fit\\.rds$")
-  
-  # Filter files matching the pattern
-  matching_files <- files[grepl(pattern, files)]
-  
-  return(matching_files)
-}
-
-
-
-# return the file object given the file path
-#-------------------------------------------------------------------------------
-load_multiple_rds <- function(file_paths) {
-  ext <- tolower( tail(strsplit(basename(file_paths), "\\.")[[1]], 1) )
-  if (ext != "rds") {
-    stop("Invalid file type!")
+  if ( is.null(patient_id) ) {
+    files <- list.files(p1, pattern = "*_remove_tail_all_best_fit.txt", full.names = TRUE, recursive = TRUE) # List all RDS files
+  } else if ( !is.null(patient_id) ) {
+    p2 <- paste0(p1, patient_id, "/")
+    files <- list.files(p2, pattern = "*_remove_tail_all_best_fit.txt", full.names = TRUE, recursive = TRUE) # List all RDS files
+  } else {
+    stop("something wrong!")
   }
-  data_list <- lapply(file_paths, readRDS)
-  names(data_list) <- basename(file_paths)  # Use file names as list names
-  return(data_list)
+  return(files)
 }
 
-load_multiple_txt <- function(file_paths) {
-  ext <- tolower( tail(strsplit(basename(file_paths), "\\.")[[1]], 1) )
-  if (ext != "txt") {
-    stop("Invalid file type!")
-  }
-  data_list <- lapply(file_paths, read.delim)
-  names(data_list) <- basename(file_paths)  # Use file names as list names
-  return(data_list)
-}
-
-
-
-getters_tumorevo_subclone <- function(MAIN_PATH, SPN_ID, coverage, purity, patient_id = NULL, sample_id = NULL, tool) {
+#===============================================================================
+# viber getter
+#===============================================================================
+viber_getter <- function(dataset, patient_id = NULL) {
   
-  path <- paste0(MAIN_PATH, "SPN0", SPN_ID, "/tumorevo/", coverage, "x/", purity, "p/", "results_tumourevo_mseq/subclonal_deconvolution/")
+  p1 <- paste0("reuslts_tumorevo_", tolower(dataset), "/subclonal_deconvolution/viber/", dataset, "/")
+  
+  if ( is.null(patient_id) ) {
+    files <- list.files(p1, pattern = "*_remove_tail_all_viber_best_st_fit.rds", full.names = TRUE, recursive = TRUE) # List all RDS files
+  } else if ( !is.null(patient_id) ) {
+    p2 <- paste0(p1, patient_id, "/")
+    files <- list.files(p2, pattern = "*_remove_tail_all_viber_best_st_fit.rds", full.names = TRUE, recursive = TRUE) # List all RDS files
+  } else {
+    stop("something wrong!")
+  }
+  return(files)
+}
+
+
+#===============================================================================
+# subclonal deconvolution getter
+#===============================================================================
+subclone_getter <- function(tool, dataset, patient_id=NULL, sample_id=NULL) {
   
   if (tool=="mobster") {
-    files_list <- getter_mobster(path, patient_id, sample_id)
-    if (length(files_list) != 0) {
-      return(load_multiple_rds(files_list))
-    }
+    output <- mobster_getter(dataset, patient_id, sample_id)
   }
-  if (tool=="pyclonevi") {
-    files_list <- getter_pyclonevi(path, patient_id)
-    if (length(files_list) != 0) {
-      return(load_multiple_txt(files_list))
-    }
+  else if (tool=="pyclonevi") {
+    output <- pyclonevi_getter(dataset, patient_id)
   }
-  if (tool=="viber") {
-    files_list <- getter_viber(path, patient_id)
-    if (length(files_list) != 0) {
-      return(load_multiple_rds(files_list))
-    }
+  else if (tool=="viber") {
+    output <- viber_getter(dataset, patient_id)
   }
   else {
-    stop("Error in 'getters_tumorevo_subclone' function!")
+    stop("wrong tool specified!")
   }
-  
+  return(output)
 }
+
+
 
 
 

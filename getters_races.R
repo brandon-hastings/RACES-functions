@@ -113,7 +113,7 @@ getter_races <- function(MAIN_PATH = "/orfeo/cephfs/scratch/cdslab/shared/SCOUT/
   
   type <- tolower(type)
   
-  if ( !endsWith(MAIN_PATH) ) {
+  if ( !endsWith(MAIN_PATH, "/") ) {
     MAIN_PATH <- paste0(MAIN_PATH, "/")
   }
   
